@@ -372,7 +372,7 @@ public class Barman extends Thread {
     
     
     private void recordCompletedOrder(DrinkOrder order) throws IOException {
-    	// store experimentation results of MLQ in csv file that will use a python for automated testing
+    	// Store experimentation results of MLQ in csv file that the python scripts will use to analyse and generate graphs from the experiment  
         String fileName = "results/" + schedulerName + "_results.csv";
         File resultsDir = new File("results");
         if (!resultsDir.exists()) {
@@ -401,6 +401,20 @@ public class Barman extends Thread {
             long turnaroundTime = order.getTurnaroundTime();
             int  executionTime  = order.getExecutionTime();
             int  queueLevel     = order.getQueueLevel();
+         
+        // Formatting csv file that will produce results for the runs across the algorithms 
+        fw.write(String.format("%d,%s,%d,%d,%d,%d,%d,%d,%d,%d\n",
+                    order.getOrderer(),
+                    order.getDrinkName(),
+                    arrivalTime,
+                    serviceStart,
+                    completionTime,
+                    waitingTime,
+                    responseTime,
+                    turnaroundTime,
+                    executionTime,
+                    queueLevel
+            ));
 
      
     }

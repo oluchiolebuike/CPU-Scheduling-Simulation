@@ -7,6 +7,9 @@
  1 = SJF
  2 = Priority
  3 = MLFQ with aging
+
+ Bonus:
+ 4 = BPQ-ADRR queues
  */
 
 
@@ -46,6 +49,17 @@ public class Barman extends Thread {
     private static final long AGING_THRESHOLD = 4000; // ms
 
     private final String schedulerName;
+
+   // Bonus: BPQ-ADRR queues 
+   // PriorityBlockingQueues automatically maintain ADRR ordering at O(log n)
+   private PriorityBlockingQueue<DrinkOrder> bq0;
+   private PriorityBlockingQueue<DrinkOrder> bq1;
+   private PriorityBlockingQueue<DrinkOrder> bq2;
+
+  // Separate aging threshold for BPQ-ADRR 
+  // Promotes faster than MLFQ
+ private static final long BONUS_AGING_THRESHOLD = 3000; // ms
+
 
  
 

@@ -62,8 +62,7 @@ public class Barman extends Thread {
 
 
  
-
- //=NO CHANGE AREA BEINGS=========================================================   
+ 
     Barman(CountDownLatch startSignal, int sAlg, int sTime) {
         this.startSignal = startSignal;
         this.schedAlg = sAlg;

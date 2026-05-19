@@ -431,6 +431,127 @@ public class Barman extends Thread {
         bq1 = new PriorityBlockingQueue<>(5000, adrComparator);
         bq2 = new PriorityBlockingQueue<>(5000, adrComparator);
      }
+
+     // Determine which BPQ-ADRR tier an incoming order belongs to
+     //   bq0 (highest priority) = light patrons  (0-1 drinks served)
+     //   bq1 (medium priority)  = moderate patrons (2-3 drinks served)
+     //   bq2 (lowest priority)  = heavy patrons  (4+ drinks served)
+
+     private int bonusInitialQueue(DrinkOrder order){
+       int patron = order.getOrderer();
+       int served = drinksServedPerPatron.getOrDefault(patron, 0);
+
+       if (served <= 1){
+         return 0;
+       }
+
+       if (served <= 3){
+         return 1;
+       }
+
+       return 2;
+     }
+
+     // Insert order into correct BPQ-ADRR tier
+     // Records enqueue time so aging mech can track wait duration
+     private void enqueueBonusOrders(DrinkOrder order, int level) throws InterruptedException{
+       order.setQueueLevel(level);
+       order.setEnqueueTime(System.currentTimeMillis());
+
+       switch (level){
+        case 0:
+         bq0.put(order);
+         break;
+        case 1:
+         bq1.put(order);
+         break;
+        case 2:
+         bq2.put(order);
+         break;
+        default:
+          throw new IllegalArgumentException("Invalid BPQ level:" + level);
+       }
+     }
+
+     // Trigger aging across all BPQ-ADRR tiers
+    // Orders that have waited >= BONUS_AGING_THRESHOLD are promoted one tier up,
+    // preventing starvation in lower-priority queues
+    // Uses BONUS_AGING_THRESHOLD (not AGING_THRESHOLD) so BPQ-ADRR aging
+    // is tuned independently from MLFQ
+
+     private void ageBonusQueues() throws InterruptedException{
+        long now = System.currentTimeMillis();
+        promoteBonusOrders(bq2, bq1, 2, 1, now);
+        promoteBonusOrders(bq1, bq0, 1, 0, now);
+     }
+
+    // Promote orders from one BPQ tier to the next higher tier if they have
+    // waited longer than BONUS_AGING_THRESHOLD
+    private void promoteBonusOrders(PriorityBlockingQueue<DrinkOrder> from, PriorityBlockingQueue<DrinkOrder> to, int fromLevel, int toLevel, long now) throws InterruptedException{
+     int size = from.size();
+
+     for (int i = 0; i < size; i++){
+       DrinkOrder order = from.poll();
+       if (order == null){
+         break;
+       }
+
+       long waited = now - order.getEnqueueTime();
+
+      if (order.getQueueLevel() == fromLevel && waited >= BONUS_AGING_THRESHOLD){
+        // Promote 
+        // Reset Enqueue Time
+        order.setQueueLevel(toLevel);
+        order.setEnqueueTime(now);
+        to.put(order);
+      } else {
+        // Not ready for promotion
+        // Return to same queue
+        from.put(order);
+      }
+     }
+
+       // Select the next order to process under BPQ-ADRR policy:
+       //   1. Age all queues (starvation prevention)
+       //   2. Poll bq0 first - highest priority shortest job at the head
+       //   3. Fall through to bq1 then bq2
+       //   4. If all queues empty sleep briefly to avoid busy-waiting
+    
+       // Because each queue is a PriorityBlockingQueue poll() always returns
+       // the shortest-execution-time order in O(log n)
+       private DrinkOrder takeNextBonusOrder() throws InterruptedException{
+         while (true){
+           ageBonusQueues();
+
+           DrinkOrder order = bq0.poll();
+           if (order != null){
+            return order;
+           }
+
+           order = bq1.poll();
+           if (order != null){
+            return order;
+           }
+
+           DrinkOrder order = bq2.poll();
+           if (order != null){
+            return order;
+           }
+
+           // All queues empty 
+           // Yield CPU briefly before retrying
+           TimeUnit.MILLISECONDS.sleep(1);
+        
+        }
+       }
+
+     
+    }
+     
+
+     
+     
+     
      
 
 }

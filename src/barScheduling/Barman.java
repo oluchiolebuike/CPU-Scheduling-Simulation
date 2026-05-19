@@ -97,6 +97,12 @@ public class Barman extends Thread {
                 q2 = new LinkedBlockingQueue<DrinkOrder>();
                 drinksServedPerPatron = new ConcurrentHashMap<Integer, Integer>();
                 break;
+          
+         // Bonus: initialise PriorityBlockingQueues with ADRR comparator
+         case 4:
+               initialiseBonusQueues();
+               drinksServedPerPatron = new ConcurrentHashMap<Integer, Integer>();
+               break;
 
             default:
                 throw new IllegalArgumentException(
@@ -107,15 +113,32 @@ public class Barman extends Thread {
     }
 
     private static String schedulerName(int schedAlg) {
+       long now = System.currentTimeMillis();
+       order.setArrivalTime(now);
+       order.setEnqueueTime(now);
+       order.setSequenceNumber(nextSequenceNumber());
+     
         switch (schedAlg) {
             case 0:
-                return "FCFS";
+                fcfsQueue.put(order);
+                break;
             case 1:
-                return "SJF";
+                sjfQueue.put(order);
+                break;
             case 2:
-                return "PRIORITY";
+                order.setPriority(order.getOrderer()); // Lower patron ID = higher priority
+                priorityQueue.put(order);
+                break;
             case 3:
-                return "MLFQ";
+                int level = initialQueueFor(order);
+                order.setQueueLevel(level);
+                enqueueMLFQ(order, level);
+                break;
+         case 4:
+               int bLevel = bonusInitialQueue(order);
+               enqueueBonusOrder(order, bLevel);
+               break;
+          
             default:
                 throw new IllegalArgumentException(
                         "Invalid scheduler " + schedAlg +

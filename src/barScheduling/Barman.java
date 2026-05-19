@@ -367,13 +367,42 @@ public class Barman extends Thread {
 
         sleep(switchTime);
     }
-    
-//=NO CHANGE AREA ENDS=========================================================   
+     
       
     
     
     private void recordCompletedOrder(DrinkOrder order) throws IOException {
-    	// THIS IS THE ONLY FUNCTION YOU MAY CHANGE
+    	// store experimentation results of MLQ in csv file that will use a python for automated testing
+        String fileName = "results/" + schedulerName + "_results.csv";
+        File resultsDir = new File("results");
+        if (!resultsDir.exists()) {
+            resultsDir.mkdirs();
+        }
+
+        File file = new File(fileName);
+        boolean writeHeader = false;
+
+        // Create file write header with the parameters & metrics
+        if (!file.exists() || file.length() == 0) {
+            writeHeader = true;
+        }
+
+        try (FileWriter fw = new FileWriter(file, true)) {
+            if (writeHeader) {
+                fw.write("PatronID,DrinkName,ArrivalTime,ServiceStartTime,CompletionTime," + "WaitingTime,ResponseTime,TurnaroundTime,ExecutionTime,QueueLevel\n");
+            }
+
+            // Store parameters and metrics from write
+            long arrivalTime    = order.getArrivalTime()   - SchedulingSimulation.simStartTime;
+            long serviceStart   = order.getServiceStartTime() - SchedulingSimulation.simStartTime;
+            long completionTime = order.getCompletionTime()   - SchedulingSimulation.simStartTime;
+            long waitingTime    = order.getWaitingTime();
+            long responseTime   = order.getResponseTime();
+            long turnaroundTime = order.getTurnaroundTime();
+            int  executionTime  = order.getExecutionTime();
+            int  queueLevel     = order.getQueueLevel();
+
+     
     }
 
 }

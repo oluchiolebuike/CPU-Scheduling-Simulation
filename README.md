@@ -11,33 +11,11 @@ Patrons map to processes, drink orders map to CPU bursts and drinking intervals 
 - Context-switch overhead: 5 ms (constant)
 - Total runs: 200 (100 light + 100 heavy)
 
-## Key Findings
-### SJF
-- Lowest avg wait & turnaround (heavy load)
-- Starvation risk for complex orders
-- 
-## FCFS
-- Most fair & predictable, zero starvation
-- Higher average wait times
-- 
-## Priority
-- Best response time 
-- Severe starvation for low-priority patrons
-- 
-## MLFQ
-- Aging limits worst-case waits
-- Overhead exceeds FCFS under this workload
-
-## BPQ-ADRR
+## BPQ-ADRR Analysis
 - Best light-load performance; highest throughput
+- BPQ-ADRR suits high-throughput venues (festivals, clubs) where maximising orders served matters most
+- For a typical low-to-medium load bar it's the best option
 - Inflated heavy-load averages but still had the highest throughput
+- It accumulates wait time across twice as many orders which inflates the per-algorithm average
+- Its worst-case waiting time is actually better than Priority despite serving far more orders meaning its starvation protection holds up reasonably well
 
-### Recommendation
-SJF is recommended for a typical bar — lowest waiting and turnaround times with near-zero response time. FCFS is preferred when fairness is paramount. BPQ-ADRR suits high-throughput venues (festivals, clubs) where maximising orders served matters most.
-
-## Metrics Tracked
-- Average & median waiting time per patron
-- Response time (first drink wait)
-- Turnaround time
-- Throughput (total orders completed)
-- Starvation outlier detection (IQR-based)

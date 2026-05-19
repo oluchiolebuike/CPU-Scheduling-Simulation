@@ -545,6 +545,16 @@ public class Barman extends Thread {
         }
        }
 
+       // BPQ ADRR Bonus scheduler implementation
+       private void runBonus() throws InterruptedException, IOException{
+         while (true){
+           DrinkOrder currentOrder = takeBonusOrder();
+           
+          processOrder(currentOrder, "---BPQ-ADRR Barman preparing drink for patron "+ currentOrder + " from BQ" + currentOrder.getQueueLevel() + " [execTime=" + currentOrder.getExecutionTime() + "ms]);
+         }
+       }
+     
+
      
     }
      

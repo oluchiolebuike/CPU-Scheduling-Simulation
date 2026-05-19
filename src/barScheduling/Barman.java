@@ -15,6 +15,8 @@
 
 package barScheduling;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -112,39 +114,15 @@ public class Barman extends Thread {
     }
 
     private static String schedulerName(int schedAlg) {
-       long now = System.currentTimeMillis();
-       order.setArrivalTime(now);
-       order.setEnqueueTime(now);
-       order.setSequenceNumber(nextSequenceNumber());
-     
-        switch (schedAlg) {
-            case 0:
-                fcfsQueue.put(order);
-                break;
-            case 1:
-                sjfQueue.put(order);
-                break;
-            case 2:
-                order.setPriority(order.getOrderer()); // Lower patron ID = higher priority
-                priorityQueue.put(order);
-                break;
-            case 3:
-                int level = initialQueueFor(order);
-                order.setQueueLevel(level);
-                enqueueMLFQ(order, level);
-                break;
-         case 4:
-               int bLevel = bonusInitialQueue(order);
-               enqueueBonusOrder(order, bLevel);
-               break;
-          
-            default:
-                throw new IllegalArgumentException(
-                        "Invalid scheduler " + schedAlg +
-                        ". Valid values are: 0=FCFS, 1=SJF, 2=Priority, 3=MLFQ."
-                );
-        }
+    switch (schedAlg) {
+        case 0: return "FCFS";
+        case 1: return "SJF";
+        case 2: return "Priority";
+        case 3: return "MLFQ";
+        case 4: return "BPQ-ADRR";
+        default: throw new IllegalArgumentException("Invalid scheduler: " + schedAlg);
     }
+}
 
     public void placeDrinkOrder(DrinkOrder order) throws InterruptedException, IOException {
         long now = System.currentTimeMillis();
@@ -171,6 +149,10 @@ public class Barman extends Thread {
                 order.setQueueLevel(level);
                 enqueueMLFQ(order, level);
                 break;
+            case 4:
+                 int bLevel = bonusInitialQueue(order);
+                 enqueueBonusOrders(order, bLevel);
+                 break;
 
             default:
                 throw new IllegalArgumentException(
@@ -273,7 +255,7 @@ public class Barman extends Thread {
     }
 
     private void recordServedDrink(DrinkOrder order) {
-        if (schedAlg == 3) {
+        if (schedAlg == 3 || schedAlg == 4) {
             int patron = order.getOrderer();
             drinksServedPerPatron.merge(patron, 1, Integer::sum);
         }
@@ -298,6 +280,9 @@ public class Barman extends Thread {
                     break;
                 case 3:
                     runMLFQ();
+                    break;
+               case 4:
+                    runBonus(); // Added Bonus run
                     break;
                 default:
                     throw new IllegalStateException(
@@ -414,6 +399,7 @@ public class Barman extends Thread {
                     executionTime,
                     queueLevel
             ));
+        }
 
      
     }
@@ -453,7 +439,7 @@ public class Barman extends Thread {
 
      // Insert order into correct BPQ-ADRR tier
      // Records enqueue time so aging mech can track wait duration
-     private void enqueueBonusOrders(DrinkOrder order, int level) throws InterruptedException{
+     private void enqueueBonusOrder(DrinkOrder order, int level) throws InterruptedException{
        order.setQueueLevel(level);
        order.setEnqueueTime(System.currentTimeMillis());
 
@@ -532,7 +518,7 @@ public class Barman extends Thread {
             return order;
            }
 
-           DrinkOrder order = bq2.poll();
+           order = bq2.poll();
            if (order != null){
             return order;
            }
@@ -547,9 +533,9 @@ public class Barman extends Thread {
        // BPQ ADRR Bonus scheduler implementation
        private void runBonus() throws InterruptedException, IOException{
          while (true){
-           DrinkOrder currentOrder = takeBonusOrder();
+           DrinkOrder currentOrder = takeNextBonusOrder();
            
-          processOrder(currentOrder, "---BPQ-ADRR Barman preparing drink for patron "+ currentOrder + " from BQ" + currentOrder.getQueueLevel() + " [execTime=" + currentOrder.getExecutionTime() + "ms]);
+          processOrder(currentOrder, "---BPQ-ADRR Barman preparing drink for patron "+ currentOrder + " from BQ" + currentOrder.getQueueLevel() + " [execTime=" + currentOrder.getExecutionTime() + "ms]");
          }
        }
      

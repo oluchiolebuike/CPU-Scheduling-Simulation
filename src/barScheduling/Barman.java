@@ -419,4 +419,18 @@ public class Barman extends Thread {
      
     }
 
+    // BONUS: BPQ-ADRR
+    // Initialise 3 PriorityBlockingQueues with the ADRR comparator
+    // Ordering: shortest execution time first and sequence number breaks ties
+    // O(log n) insertion and removal so no manual sorting needed
+
+     private void initialiseBonusQueues(){
+        Comparator<DrinkOrder> adrComparator = Comparator.comparingInt(DrinkOrder::getExecutionTime).thenComparingLong(DrinkOrder::getSequenceNumber);
+
+        bq0 = new PriorityBlockingQueue<>(5000, adrComparator);
+        bq1 = new PriorityBlockingQueue<>(5000, adrComparator);
+        bq2 = new PriorityBlockingQueue<>(5000, adrComparator);
+     }
+     
+
 }

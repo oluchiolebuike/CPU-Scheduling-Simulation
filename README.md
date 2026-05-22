@@ -1,6 +1,6 @@
 # Scheduling Algorithm Comparison — Allegra the Barman
-A simulation study comparing four standard CPU scheduling algorithms using bash and python scripts across runs — FCFS, SJF, Priority and MLFQ plus a custom bonus algorithm (BPQ-ADRR), modelled through the analogy of a busy bar.
-Grade: 90%
+- A simulation study comparing four standard CPU scheduling algorithms using bash and python scripts across runs — FCFS, SJF, Priority and MLFQ plus a custom bonus algorithm (BPQ-ADRR), modelled through the analogy of a busy bar.
+- Grade: 90%
 
 ## Overview
 Patrons map to processes, drink orders map to CPU bursts and drinking intervals map to I/O waits. Allegra the Barman acts as both the CPU and scheduler, serving orders according to each algorithm's rules. All algorithms are non-preemptive at the order level (no half-made drinks).

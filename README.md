@@ -3,7 +3,10 @@
 - Grade: 94%
 
 ## Overview
-Patrons map to processes, drink orders map to CPU bursts and drinking intervals map to I/O waits. Allegra the Barman acts as both the CPU and scheduler, serving orders according to each algorithm's rules. All algorithms are non-preemptive at the order level (no half-made drinks).
+Patrons map to processes, drink orders map to CPU bursts and drinking intervals map to I/O waits. Allegra the Barman acts as both the CPU and scheduler, serving orders according to each algorithm's rules. All algorithms are non-preemptive at the order level (no half-made drinks). I noticed that grouping identical drink orders and serving larger tables first would make the bar more efficient and generate higher revenues for the bar (like peak or rush hours), so I built the bonus algorithm around those two ideas. Find matching orders quickly instead of checking every patron in the queue one by one.
+
+## BPQ-ADRR
+After observing that naive queue scanning for identical drink orders costs O(n) per scheduling decision, I designed BPQ (Batch Priority Queue), which indexes orders into a max-heap keyed by drink frequency — reducing each scheduling decision to O(log D), where D is the number of distinct drink types on the menu.
 
 ## Experimental Setup
 - Light load: 5, 10, 15, 20 patrons
